@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 interface RecipientsProps{
@@ -7,6 +7,64 @@ interface RecipientsProps{
 const MAX_RECIPIENT_WIDTH = 40;
 
 export default function RecipientsDisplay({recipients}:RecipientsProps) {
+  const textAreaRef = useRef(null);
+  const [textAreaWidth, setTextAreaWidth] = useState(null);
+  const [badgeCount, setBadgeCount] = useState(recipients.length-1);
+  const [tempReciepts, setTempReciepts] = useState(recipients);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (textAreaRef.current) {
+        setTextAreaWidth(textAreaRef.current.clientWidth);
+
+        if(textAreaWidth<200){
+          setTempReciepts(recipients.slice(0,1));
+          setBadgeCount(recipients.length-1);
+        }
+        else if(textAreaWidth>200 && textAreaWidth<=385 && recipients.length>1){
+          var len = recipients.slice(0,2).toString().length;
+          if(len<=40){
+            setTempReciepts(recipients.slice(0,2));
+            setBadgeCount(recipients.length-2);
+          }
+          else {
+            setTempReciepts(recipients.slice(0,1));
+            setBadgeCount(recipients.length-1);
+          }
+        }
+        else if(textAreaWidth>385 && textAreaWidth<=565 && recipients.length>2){
+          var len = recipients.slice(0,2).toString().length;
+          if(len<=40){
+            setTempReciepts(recipients.slice(0,3));
+            setBadgeCount(recipients.length-3);
+          }
+          else {
+            setTempReciepts(recipients.slice(0,2));
+            setBadgeCount(recipients.length-2);
+          }
+        }
+        else {
+          setTempReciepts(recipients);
+        }
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // const handleTextAreaChange = (event) => {
+  //   if (textAreaRef.current) {
+  //     const width = textAreaRef.current.clientWidth;
+  //     setTextAreaWidth(width);
+  //     console.log(width);
+  //   }
+  // };
+
+
+
     const CellContainer = styled.div`
     font-size: 16px;
     foreground-color: #333333;
@@ -42,10 +100,10 @@ export default function RecipientsDisplay({recipients}:RecipientsProps) {
       tempContainer.innerText = recipients.toString()
       return(tempContainer.innerText);
    }
-   const badgeCount=recipients.length-1;
+
       return (
         <CellContainer>
-        <TextArea>{recipients.toString()}</TextArea>    
+        <TextArea ref={textAreaRef}>{badgeCount>0? (tempReciepts.join(", ") + ", ...") : tempReciepts.join(", ")}</TextArea>    
         {badgeCount>0&&(
             <Badge>+{badgeCount}</Badge>
         )}
