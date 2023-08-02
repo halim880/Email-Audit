@@ -8,44 +8,20 @@ const MAX_RECIPIENT_WIDTH = 40;
 
 export default function RecipientsDisplay({recipients}:RecipientsProps) {
   const textAreaRef = useRef(null);
-  const [textAreaWidth, setTextAreaWidth] = useState(null);
   const [badgeCount, setBadgeCount] = useState(recipients.length-1);
   const [tempReciepts, setTempReciepts] = useState(recipients);
 
   useEffect(() => {
     const handleResize = () => {
       if (textAreaRef.current) {
-        setTextAreaWidth(textAreaRef.current.clientWidth);
+        const cellWidth = textAreaRef.current.clientWidth - 40;
+        const textToMeasure = recipients.toString();
+        
+        const textWidth = getStringWidthInPixels(textToMeasure);
+        const trimmeArr = getTrimmedArr(recipients.join(", "), cellWidth);
 
-        if(textAreaWidth<200){
-          setTempReciepts(recipients.slice(0,1));
-          setBadgeCount(recipients.length-1);
-        }
-        else if(textAreaWidth>200 && textAreaWidth<=385 && recipients.length>1){
-          var len = recipients.slice(0,2).toString().length;
-          if(len<=40){
-            setTempReciepts(recipients.slice(0,2));
-            setBadgeCount(recipients.length-2);
-          }
-          else {
-            setTempReciepts(recipients.slice(0,1));
-            setBadgeCount(recipients.length-1);
-          }
-        }
-        else if(textAreaWidth>385 && textAreaWidth<=565 && recipients.length>2){
-          var len = recipients.slice(0,2).toString().length;
-          if(len<=40){
-            setTempReciepts(recipients.slice(0,3));
-            setBadgeCount(recipients.length-3);
-          }
-          else {
-            setTempReciepts(recipients.slice(0,2));
-            setBadgeCount(recipients.length-2);
-          }
-        }
-        else {
-          setTempReciepts(recipients);
-        }
+        setTempReciepts(trimmeArr);
+        setBadgeCount(recipients.length - trimmeArr.length);
       }
     };
     window.addEventListener('resize', handleResize);
@@ -55,13 +31,40 @@ export default function RecipientsDisplay({recipients}:RecipientsProps) {
     };
   }, []);
 
-  // const handleTextAreaChange = (event) => {
-  //   if (textAreaRef.current) {
-  //     const width = textAreaRef.current.clientWidth;
-  //     setTextAreaWidth(width);
-  //     console.log(width);
-  //   }
-  // };
+  function getTrimmedArr(text : string, maxWidth : number) : string[] {
+    let widthInPixels = getStringWidthInPixels(text);
+    let trimmedText = text;
+    if (widthInPixels <= maxWidth) {
+      trimmedText = text;
+    } else {
+      while (widthInPixels > maxWidth && trimmedText.length > 0) {
+        trimmedText = trimmedText.slice(0, -1);
+        widthInPixels = getStringWidthInPixels(trimmedText);
+      }
+    }
+    let tmpArr = trimmedText.split(", ");
+    const lstEmail = tmpArr[tmpArr.length - 1]
+    
+
+    if(recipients.indexOf(lstEmail)==-1){
+      tmpArr.pop();
+    }
+    if(tmpArr.length==0){
+      tmpArr.push(recipients[0]);
+    }
+    return tmpArr;
+  }
+
+  function getStringWidthInPixels(text: string): number {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("Canvas context is not supported.");
+    }
+    const font = "16px Arial";
+    const metrics = context.measureText(text);
+    return metrics.width;
+  }
 
 
 
